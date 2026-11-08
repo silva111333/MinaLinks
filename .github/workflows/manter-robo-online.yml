@@ -1,0 +1,13 @@
+name: Manter robô MinaLinks online
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acordar servidor gratuito
+        run: curl --fail --silent --show-error --max-time 90 --retry 2 https://minalinks-robo-lm3c.onrender.com/ > /dev/null
