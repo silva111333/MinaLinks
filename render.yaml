@@ -2,21 +2,17 @@ services:
   - type: web
     name: minalinks-robo
     runtime: docker
-    plan: starter
+    plan: free
     region: virginia
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /
     autoDeployTrigger: commit
-    disk:
-      name: minalinks-sessao
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: SITE_URL
         value: https://minalinks.sacredcaper.chatgpt.site
       - key: DATA_DIR
-        value: /var/data
+        value: /tmp/minalinks
       - key: OAI_SITES_TOKEN
         sync: false
       - key: BRIDGE_TOKEN

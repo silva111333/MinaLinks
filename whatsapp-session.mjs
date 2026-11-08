@@ -1,6 +1,6 @@
 // Authentication state is separate from the delivery journal. Revoking a
 // login must never erase sent/uncertain deliveries or enable duplicate sends.
-export function createSessionStore(database, { initCreds, reviver, replacer, convertKey = (_type, value) => value }) {
+export function createSessionStore(database, { initCreds, reviver, replacer, convertKey = (_type, value) => value, onChange = () => {} }) {
   let generation = 0;
   const read = id => {
     const row = database.prepare('SELECT value FROM state WHERE id=?').get(id);
@@ -9,8 +9,30 @@ export function createSessionStore(database, { initCreds, reviver, replacer, con
   const write = (id, value) => {
     if (value == null) database.prepare('DELETE FROM state WHERE id=?').run(id);
     else database.prepare('INSERT INTO state(id,value) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET value=excluded.value').run(id, JSON.stringify(value, replacer));
+    onChange();
   };
   return {
+    dump() {
+      return JSON.stringify(database.prepare('SELECT id,value FROM state ORDER BY id').all());
+    },
+    restore(snapshot) {
+      const rows = JSON.parse(snapshot);
+      if (!Array.isArray(rows) || rows.length > 20000) throw new Error('Sessão remota inválida.');
+      database.exec('BEGIN');
+      try {
+        database.prepare('DELETE FROM state').run();
+        const insert = database.prepare('INSERT INTO state(id,value) VALUES(?,?)');
+        for (const row of rows) {
+          if (!row || typeof row.id !== 'string' || typeof row.value !== 'string') throw new Error('Sessão remota inválida.');
+          JSON.parse(row.value);
+          insert.run(row.id, row.value);
+        }
+        database.exec('COMMIT');
+      } catch (error) {
+        database.exec('ROLLBACK');
+        throw error;
+      }
+    },
     open() {
       const version = ++generation;
       const active = () => version === generation;
@@ -41,6 +63,7 @@ export function createSessionStore(database, { initCreds, reviver, replacer, con
       if (!session.active()) return false;
       ++generation;
       database.prepare('DELETE FROM state').run();
+      onChange();
       return true;
     },
   };
