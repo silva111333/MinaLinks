@@ -1,0 +1,19 @@
+{
+  "name": "minalinks-robo-shopee",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node --env-file=.env bridge.mjs",
+    "check": "node --check bridge.mjs"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "6.7.24",
+    "pino": "9.14.0",
+    "playwright-core": "1.64.1",
+    "qrcode": "1.5.4"
+  }
+}
