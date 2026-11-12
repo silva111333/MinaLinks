@@ -48,6 +48,6 @@ database.prepare("UPDATE deliveries SET state='uncertain',error='Serviço reinic
 await restoreSession();
 await connect();
 async function loop(){const delay=await tick();if(!stopped)setTimeout(loop,delay??15000);}void loop();
-const heartbeatInterval=setInterval(()=>void heartbeat(),25000);let scanBusy=false;const scanInterval=setInterval(async()=>{if(stopped||scanBusy)return;scanBusy=true;try{await api({action:'scan'});}catch{console.error('Erro na busca automática:', error.message);}finally{scanBusy=false;}},60000);
+const heartbeatInterval=setInterval(()=>void heartbeat(),25000);let scanBusy=false;const scanInterval=setInterval(async()=>{if(stopped||scanBusy)return;scanBusy=true;try{await api({action:'scan'});}catch(error){console.error('Erro na busca automática:', error.message);}finally{scanBusy=false;}},60000);
 createServer((_req,res)=>{res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({service:'minalinks-robo-shopee',running:!stopped}));}).listen(Number(process.env.PORT||8080),process.env.LISTEN_HOST||'0.0.0.0');
 async function shutdown(){if(stopped)return;status='close';qr=null;try{qrDisplay.clear();}catch{}await heartbeat();stopped=true;clearInterval(heartbeatInterval);clearInterval(scanInterval);clearTimeout(reconnectTimer);clearTimeout(sessionPushTimer);try{await pushSession();}catch{}socket?.end(new Error('Serviço encerrado'));await pixBrowser.close();database.close();process.exit(0);}process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);
